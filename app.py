@@ -320,6 +320,8 @@ def approve_chapter(id):
     db.session.commit()
     flash(f"章节《{chapter.title}》已发布", "success")
     return redirect(url_for("admin_dashboard"))
+with app.app_context():
+    db.create_all()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
