@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>《{{ novel.title }}》 - 发布新章节</h2>
+<form method="post">
+  {{ form.hidden_tag() }}
+  <p>{{ form.title.label }}<br>{{ form.title(placeholder="例如：第一章 开端") }}</p>
+  <p>{{ form.content.label }}<br>{{ form.content(rows=20) }}</p>
+  <p>{{ form.submit() }}</p>
+</form>
+{% endblock %}

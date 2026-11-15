@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>书库</h2>
+{% for n in novels %}
+  <div class="card">
+    <h3>{{ n.title }}</h3>
+    <p>{{ n.intro or "（无简介）" }}</p>
+    <p class="status">作者：{{ n.author.username }}</p>
+   <a href="{{ url_for('novel_detail', novel_id=n.id) }}">查看目录</a>
+  </div>
+{% endfor %}
+{% endblock %}

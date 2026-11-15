@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>{{ novel.title }} - 创作后台</h2>
+        <a href="{{ url_for('edit_novel', novel_id=novel.id) }}" style="color: #ff7f50; text-decoration: none;">✎ 修改书名/简介</a>
+    </div>
+    
+    <!-- 新建卷 -->
+    <div style="background: white; padding: 10px; margin-bottom: 20px; border-radius: 4px; border-left: 4px solid #4CAF50;">
+        <form method="post" action="{{ url_for('create_volume', novel_id=novel.id) }}" style="display: flex; gap: 10px;">
+            <input type="text" name="volume_title" placeholder="输入新卷名，例如：第二卷 风起云涌" required style="flex: 1; padding: 8px;">
+            <button type="submit" style="background: #4CAF50; color: white; padding: 8px 16px; border: none; cursor: pointer;">+ 新建卷</button>
+        </form>
+    </div>
+
+    {% for volume in novel.volumes|sort(attribute='order_num') %}
+    <div style="margin-bottom: 30px; border: 1px solid #ddd; border-radius: 6px; overflow: hidden;">
+        <!-- 卷的头部 -->
+        <div style="background: #f1f3f5; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd;">
+            <form method="post" action="{{ url_for('edit_volume', volume_id=volume.id) }}" style="display: flex; gap: 10px; align-items: center; margin: 0;">
+                <h3 style="margin: 0; color: #333;">{{ volume.title }}</h3>
+                <input type="text" name="volume_title" placeholder="修改卷名" style="padding: 4px; font-size: 12px;">
+                <button type="submit" style="font-size: 12px; cursor: pointer;">保存修改</button>
+            </form>
+            <a href="{{ url_for('edit_chapter', novel_id=novel.id) }}" style="background: #ff7f50; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 14px;">+ 在此书新建章节</a>
+        </div>
+
+        <!-- 章节列表 -->
+        <table style="width: 100%; border-collapse: collapse; background: white; text-align: left;">
+            <tbody>
+                {% for c in volume.chapters|sort(attribute='id') %}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px; width: 40%;">{{ c.title }}</td>
+                    <td style="width: 15%; color: #666;">{{ c.word_count }} 字</td>
+                    <td style="width: 20%;">
+                        {% if c.status == "approved" %}<span style="color: green;">已发布</span>
+                        {% elif c.status == "rejected" %}<span style="color: red;">被驳回</span>
+                        {% else %}<span style="color: orange;">审核中</span>{% endif %}
+                    </td>
+                    <td style="width: 25%; text-align: right; padding-right: 15px;">
+                        {% if c.status == "approved" %}
+                            <a href="{{ url_for('read_chapter', novel_id=novel.id, chapter_id=c.id) }}" style="color: blue; text-decoration: none; margin-right: 10px;">查看</a>
+                        {% endif %}
+                        <a href="{{ url_for('edit_chapter', chapter_id=c.id) }}" style="color: #ff7f50; text-decoration: none; margin-right: 10px;">修改</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" style="padding: 15px; text-align: center; color: #999;">本卷暂无章节</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

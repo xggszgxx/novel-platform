@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+    <h2>{{ novel.title }}</h2>
+    <p style="color: #666;">简介：{{ novel.intro }}</p>
+    <p style="color: #999; font-size: 14px;">作者：{{ novel.author.username }}</p>
+    <hr>
+    
+    {% for volume in novel.volumes|sort(attribute='order_num') %}
+        <h3 style="color: #333; border-left: 4px solid #ff7f50; padding-left: 10px;">{{ volume.title }}</h3>
+        <ul style="list-style-type: none; padding-left: 10px;">
+            {% for c in volume.chapters|sort(attribute='id') %}
+                {% if c.status == "approved" %}
+                    <li style="margin-bottom: 10px;">
+                        <a href="{{ url_for('read_chapter', novel_id=novel.id, chapter_id=c.id) }}" style="text-decoration: none; color: #1a73e8;">
+                            {{ c.title }} ({{ c.word_count }}字)
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>暂无章节。</p>
+    {% endfor %}
+</div>
+{% endblock %}

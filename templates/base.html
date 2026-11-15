@@ -1,0 +1,41 @@
+ <!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>{% block title %}小说平台{% endblock %}</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 860px; margin: 0 auto; padding: 16px; }
+  nav { border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-bottom: 20px; }
+  nav a { margin-right: 12px; text-decoration: none; }
+  .flash { padding: 8px; margin: 8px 0; border-radius: 4px; background: #eef; }
+  .danger { background: #fee; }
+  .success { background: #efe; }
+  .card { border: 1px solid #ddd; padding: 12px; margin-bottom: 12px; border-radius: 6px; }
+  .status { font-size: 12px; color: #666; }
+  textarea, input[type=text], input[type=password] { width: 100%; box-sizing: border-box; margin-bottom: 8px; padding: 5px; }
+</style>
+</head>
+<body>
+<nav>
+  <a href="{{ url_for('index') }}">首页</a>
+  {% if current_user.is_authenticated %}
+  <a href="{{ url_for('edit_novel') }}">创建作品</a>
+  <a href="{{ url_for('my_novels') }}">我的作品</a>
+    {% if current_user.is_admin %}
+      <a href="{{ url_for('admin_dashboard') }}" style="color: red; font-weight: bold;">管理后台</a>
+    {% endif %}
+    <span>你好，{{ current_user.username }}</span>
+    <a href="{{ url_for('logout') }}">退出</a>
+  {% else %}
+    <a href="{{ url_for('login') }}">登录</a>
+    <a href="{{ url_for('register') }}">注册</a>
+  {% endif %}
+</nav>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, msg in messages %}
+    <div class="flash {{ category }}">{{ msg }}</div>
+  {% endfor %}
+{% endwith %}
+{% block content %}{% endblock %}
+</body>
+</html>

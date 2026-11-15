@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ '修改章节' if chapter else '发布新章节' }} - 《{{ novel.title }}》</h2>
+<form method="post">
+  {{ form.hidden_tag() }}
+  <p>
+    {{ form.volume_id.label }}<br>
+    {{ form.volume_id(style="width: 300px; padding: 5px;") }}
+  </p>
+  <p>{{ form.title.label }}<br>{{ form.title(style="width: 300px;") }}</p>
+  <p>{{ form.content.label }}<br>{{ form.content(rows=20, style="width: 100%;") }}</p>
+  <p>
+    {{ form.submit(value="保存章节", style="background: #4CAF50; color: white; padding: 8px 16px; border: none; cursor: pointer;") }}
+    <a href="{{ url_for('manage_novel', novel_id=novel.id) }}" style="margin-left: 10px; text-decoration: none; color: #666;">取消</a>
+  </p>
+</form>
+{% endblock %}

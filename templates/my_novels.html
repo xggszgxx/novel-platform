@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center;">
+  <h2>我的作品</h2>
+<a href="{{ url_for('edit_novel') }}" style="background: #ff7f50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">+ 创建新作品</a>
+</div>
+{% if not novels %}<p>你还没有作品，快去创建吧。</p>{% endif %}
+{% for n in novels %}
+  <div class="card">
+    <h3>{{ n.title }}</h3>
+    <p>{{ n.intro or "（无简介）" }}</p>
+    <p class="status">状态：{{ "已上架" if n.status == "approved" else "审核中" }}</p>
+    <a href="{{ url_for('manage_novel', novel_id=n.id) }}" style="color: blue;">管理章节 -></a>
+  </div>
+{% endfor %}
+{% endblock %}

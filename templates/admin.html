@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}管理后台{% endblock %}
+{% block content %}
+<h2>审核队列</h2>
+
+<h3>待审核的作品（建书审核）</h3>
+{% if not novels %}<p>暂无待审核作品</p>{% endif %}
+{% for n in novels %}
+  <div class="card">
+    <h4>《{{ n.title }}》 作者：{{ n.author.username }}</h4>
+    <p>{{ n.intro }}</p>
+    <form method="post" action="{{ url_for('approve_novel', id=n.id) }}">
+      <button type="submit" style="background:#4CAF50;color:white;padding:5px 10px;border:none;cursor:pointer;">通过作品</button>
+    </form>
+  </div>
+{% endfor %}
+
+<hr>
+
+<h3>待审核的章节（正文审核）</h3>
+{% if not chapters %}<p>暂无待审核章节</p>{% endif %}
+{% for c in chapters %}
+  <div class="card" style="border-left: 5px solid orange;">
+    <!-- 注意这一行：通过 c.volume.novel 来获取书名 -->
+    <h4>《{{ c.volume.novel.title }}》 - {{ c.volume.title }} - {{ c.title }} ({{ c.word_count }}字)</h4>
+    <p>正文预览：{{ c.content[:150] }}...</p>
+    <form method="post" action="{{ url_for('approve_chapter', id=c.id) }}">
+      <button type="submit" style="background:#4CAF50;color:white;padding:5px 10px;border:none;cursor:pointer;">通过章节</button>
+    </form>
+  </div>
+{% endfor %}
+
+{% endblock %}
