@@ -297,7 +297,8 @@ def admin_required(f):
 def become_admin():
     current_user.is_admin = True
     db.session.commit()
-    flash
+    flash("提权成功，你现在是管理员了！", "success")
+    return redirect(url_for("admin_dashboard"))
     
 @app.route("/admin")
 @login_required
