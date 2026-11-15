@@ -3,8 +3,20 @@
 <h2>{{ '修改作品信息' if novel else '创建新作品' }}</h2>
 <form method="post">
   {{ form.hidden_tag() }}
-  <p>{{ form.title.label }}<br>{{ form.title(style="width: 300px;") }}</p>
-  <p>{{ form.intro.label }}<br>{{ form.intro(rows=5, style="width: 100%;") }}</p>
+  <p>
+    {{ form.title.label }}<br>
+    {{ form.title(style="width: 300px;") }}
+    {% for error in form.title.errors %}
+      <span style="color: red;">[{{ error }}]</span>
+    {% endfor %}
+  </p>
+  <p>
+    {{ form.intro.label }}<br>
+    {{ form.intro(rows=5, style="width: 100%;") }}
+    {% for error in form.intro.errors %}
+      <span style="color: red;">[{{ error }}]</span>
+    {% endfor %}
+  </p>
   <p>{{ form.submit(style="background: #4CAF50; color: white; padding: 8px 16px; border: none; cursor: pointer;") }}</p>
 </form>
 {% endblock %}
