@@ -17,7 +17,8 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///" + os.path.join(basedir, "novel.db"))
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
+python
+app.config['WTF_CSRF_ENABLED'] = False
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
