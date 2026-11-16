@@ -295,7 +295,7 @@ def admin_required(f):
             flash("需要管理员权限", "danger"); return redirect(url_for("index"))
         return f(*args, **kwargs)
     return decorated_function
-
+    
 @app.route("/become-admin")
 @login_required
 def become_admin():
