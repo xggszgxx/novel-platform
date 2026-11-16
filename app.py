@@ -15,9 +15,13 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-me")
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///" + os.path.join(basedir, "novel.db"))
+db_url = os.environ.get("DATABASE_URL")
+if db_url and db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url or "sqlite:///" + os.path.join(basedir, "novel.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['WTF_CSRF_ENABLED'] = False
+
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
@@ -292,14 +296,6 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-@app.route("/become-admin")
-@login_required
-def become_admin():
-    current_user.is_admin = True
-    db.session.commit()
-    flash("提权成功，你现在是管理员了！", "success")
-    return redirect(url_for("admin_dashboard"))
-    
 @app.route("/admin")
 @login_required
 @admin_required
