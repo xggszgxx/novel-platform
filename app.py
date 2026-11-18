@@ -345,6 +345,11 @@ def approve_chapter(id):
     flash(f"章节《{chapter.title}》已发布", "success")
     return redirect(url_for("admin_dashboard"))
 
+# ---- 强制释放数据库连接，解决免费库断连问题 ----
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db.session.remove()
+
 # ---- 必须放在底部，启动时自动建表 ----
 with app.app_context():
     db.create_all()
