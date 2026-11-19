@@ -75,6 +75,15 @@ class Chapter(db.Model):
     status = db.Column(db.String(20), default="pending", nullable=False)
     reject_reason = db.Column(db.Text, default="")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+class Comment(db.Model):
+    __tablename__ = "comment"
+    id = db.Column(db.Integer, primary_key=True)
+    chapter_id = db.Column(db.Integer, db.ForeignKey("chapter.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    content = db.Column(db.String(300), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship("User", backref="comments")
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -305,7 +314,29 @@ def read_chapter(novel_id, chapter_id):
     if chapter.status != "approved" and not (current_user.is_authenticated and (current_user.is_admin or current_user.id == novel.author_id)):
         flash("该章节暂未通过审核", "danger")
         return redirect(url_for("index"))
-    return render_template("read_chapter.html", novel=novel, chapter=chapter)
+    
+    # 新增：获取该章节的所有评论
+    comments = Comment.query.filter_by(chapter_id=chapter.id).order_by(Comment.created_at.desc()).all()
+    
+    return render_template("read_chapter.html", novel=novel, chapter=chapter, comments=comments)
+
+# 新增：处理提交评论的路由
+@app.route("/chapter/<int:chapter_id>/comment", methods=["POST"])
+@login_required
+def add_comment(chapter_id):
+    chapter = Chapter.query.get_or_404(chapter_id)
+    content = request.form.get("content", "").strip()
+    
+    # 判断评论字数是否超过 300 字，且不能为空
+    if content and len(content) <= 300:
+        comment = Comment(chapter_id=chapter.id, user_id=current_user.id, content=content)
+        db.session.add(comment)
+        db.session.commit()
+        flash("反馈发布成功！", "success")
+    else:
+        flash("反馈内容不能为空，且不能超过300字", "danger")
+        
+    return redirect(url_for("read_chapter", novel_id=chapter.volume.novel_id, chapter_id=chapter.id))
 
 # ---------- 管理员 ----------
 def admin_required(f):
