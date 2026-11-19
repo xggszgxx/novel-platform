@@ -1,5 +1,36 @@
 {% extends "base.html" %}
 {% block content %}
+<!-- 章节正文 -->
 <h2 style="text-align: center;">{{ chapter.title }}</h2>
-<div style="line-height: 1.8; font-size: 16px; white-space: pre-wrap;">{{ chapter.content }}</div>
+<div style="line-height: 1.8; font-size: 16px; white-space: pre-wrap; padding-bottom: 20px; border-bottom: 1px solid #ddd;">{{ chapter.content }}</div>
+
+<!-- 读者反馈区 -->
+<div style="margin-top: 30px; background: #f8f9fa; padding: 20px; border-radius: 8px;">
+    <h3>读者反馈 ({{ comments|length }})</h3>
+    
+    <!-- 反馈输入框 -->
+    {% if current_user.is_authenticated %}
+        <form method="post" action="{{ url_for('add_comment', chapter_id=chapter.id) }}" style="margin-bottom: 20px;">
+            <textarea name="content" rows="3" maxlength="300" required placeholder="写下你对本章的看法...（最多300字）" style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; resize: vertical;"></textarea>
+            <button type="submit" style="margin-top: 10px; background: #1a73e8; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">发布反馈</button>
+        </form>
+    {% else %}
+        <p style="color: #666;"><a href="{{ url_for('login') }}">登录</a> 后才能发表反馈。</p>
+    {% endif %}
+
+    <!-- 反馈列表 -->
+    <div>
+        {% for c in comments %}
+            <div style="background: white; padding: 15px; border-radius: 6px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="display: flex; justify-content: space-between; color: #888; font-size: 13px; margin-bottom: 8px;">
+                    <strong>{{ c.user.username }}</strong>
+                    <span>{{ c.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                <div style="color: #333; line-height: 1.5;">{{ c.content }}</div>
+            </div>
+        {% else %}
+            <p style="color: #999; text-align: center;">还没有读者反馈，快来抢沙发吧！</p>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}
